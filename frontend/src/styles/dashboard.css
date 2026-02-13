@@ -47,3 +47,18 @@ body {
   color: #777;
   font-style: italic;
 }
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 10px;
+  }
+
+  .section {
+    margin-top: 10px;
+  }
+
+  select, input, button {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
