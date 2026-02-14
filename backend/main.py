@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -15,8 +15,8 @@ app.add_middleware(
 @app.post("/projects")
 def create_project(project: ProjectCreate):
     cursor.execute(
-        "INSERT INTO projects (name, owner_id) VALUES (%s, %s)",
-        (project.name, project.owner_id)
+        "INSERT INTO projects (name) VALUES (%s)",
+        (project.name,)
     )
     db.commit()
     return {"message": "Project created"}
@@ -40,14 +40,7 @@ def register(user: UserCreate):
     db.commit()
     return {"message": "User registered"}
 
-@app.post("/projects")
-def create_project(project: ProjectCreate):
-    cursor.execute(
-        "INSERT INTO projects (name, owner_id) VALUES (%s,%s)",
-        (project.name, project.owner_id)
-    )
-    db.commit()
-    return {"message": "Project created"}
+
 
 @app.get("/projects")
 def get_projects():

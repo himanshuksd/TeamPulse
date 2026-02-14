@@ -1,3 +1,4 @@
+from pydoc import text
 from pydantic import BaseModel
 
 class UserCreate(BaseModel):
@@ -7,7 +8,7 @@ class UserCreate(BaseModel):
 
 class ProjectCreate(BaseModel):
     name: str
-    owner_id: int
+   
 
 class TaskCreate(BaseModel):
     title: str
