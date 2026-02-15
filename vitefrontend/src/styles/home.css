@@ -1,0 +1,257 @@
+/* ================= GLOBAL ================= */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9fafc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 20px;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 80px;
+    background: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar h2 {
+    margin: 0;
+    font-weight: 700;
+    color: #1e3c72;
+    letter-spacing: -0.5px;
+}
+
+.nav-btn {
+    margin-left: 18px;
+    padding: 10px 18px;
+    text-decoration: none;
+    color: #1e3c72;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: #eef2ff;
+}
+
+.nav-btn.primary {
+    background: #2a5298;
+    color: white;
+}
+
+.nav-btn.primary:hover {
+    background: #1e3c72;
+}
+
+/* ================= HERO ================= */
+.hero {
+    padding: 170px 0;
+    color: white;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4f8cff 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hero h1 {
+    font-size: 58px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+}
+
+.hero p {
+    font-size: 20px;
+    line-height: 1.6;
+    margin-bottom: 35px;
+    opacity: 0.95;
+    max-width: 520px;
+}
+
+.primary-btn {
+    display: inline-block;
+    padding: 14px 28px;
+    background: white;
+    color: #1e3c72;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Hero Mockup */
+.mockup {
+    width: 540px;
+    height: 340px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 60px 120px rgba(0, 0, 0, 0.35);
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ================= ABOUT ================= */
+.about {
+    padding: 110px 0;
+    text-align: center;
+}
+
+.about-text {
+    max-width: 820px;
+    margin: auto;
+    font-size: 19px;
+    line-height: 1.7;
+    color: #444;
+}
+
+/* ================= SECTION TITLE ================= */
+.section-title {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 700;
+    margin: 130px 0 60px;
+    color: #1e3c72;
+}
+
+/* ================= FEATURES ================= */
+.features-grid {
+    display: flex;
+    justify-content: center;
+    gap: 35px;
+    flex-wrap: wrap;
+    padding-bottom: 110px;
+}
+
+.feature-card {
+    width: 300px;
+    padding: 40px;
+    background: white;
+    border-radius: 22px;
+    text-align: left;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.feature-card h3 {
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #1e3c72;
+}
+
+.feature-card p {
+    color: #555;
+    line-height: 1.6;
+}
+
+.feature-card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12);
+}
+
+/* ================= STATS ================= */
+.stats {
+    background: #f3f6ff;
+    padding: 110px 0;
+    text-align: center;
+}
+
+.stats-grid {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.stats h2 {
+    font-size: 52px;
+    font-weight: 700;
+    color: #2a5298;
+}
+
+.stats p {
+    color: #666;
+}
+
+/* ================= SHOWCASE ================= */
+.showcase {
+    padding: 140px 0;
+    background: #f9fbff;
+}
+
+.slide-box {
+    height: 520px;
+    border-radius: 26px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
+    transition: transform 0.4s ease;
+}
+
+.slick-center .slide-box {
+    transform: scale(1.05);
+}
+
+.carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slick-slide {
+    padding: 0 18px;
+}
+
+.slick-dots li button:before {
+    color: #2a5298;
+    font-size: 10px;
+}
+
+/* ================= CTA ================= */
+.cta {
+    padding: 160px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #2a5298, #1e3c72);
+    color: white;
+}
+
+.cta h2 {
+    font-size: 44px;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+    background: #0f172a;
+    color: #bbb;
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 14px;
+}
