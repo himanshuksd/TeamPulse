@@ -131,6 +131,7 @@
   font-size: 13px;
   color: #3b82f6;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   font-weight: 500;
 }

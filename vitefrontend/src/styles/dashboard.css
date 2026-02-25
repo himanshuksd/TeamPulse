@@ -1,64 +1,136 @@
+/* ===== RESET ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
+/* ===== GLOBAL ===== */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Poppins", Arial, sans-serif;
   background-color: #f4f6f8;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ===== DASHBOARD WRAPPER ===== */
 .dashboard {
-  padding: 20px;
+  padding: 24px;
 }
 
+/* ===== HEADER ===== */
 .header {
-  background-color: #1f2937;
+  background: linear-gradient(135deg, #1f2937, #111827);
   color: white;
-  padding: 15px;
-  border-radius: 6px;
+  padding: 18px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+/* ===== CARD SECTIONS ===== */
 .section {
-  background: white;
-  padding: 15px;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 20px;
   margin-top: 20px;
-  border-radius: 6px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  transition:
+    transform 0.18s ease-out,
+    box-shadow 0.18s ease-out;
 }
 
+@supports not (
+  (backdrop-filter: blur(6px)) or (-webkit-backdrop-filter: blur(6px))
+) {
+  .section {
+    background: #ffffff;
+  }
+}
+
+.section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+
+/* ===== SECTION TITLE ===== */
 .section h2 {
   margin-top: 0;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
+/* ===== LIST ===== */
 .list {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .list li {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.list li:hover {
+  background-color: #f8fafc;
 }
 
 .list li:last-child {
   border-bottom: none;
 }
 
+/* ===== EMPTY STATE ===== */
 .empty {
-  color: #777;
+  color: #6b7280;
   font-style: italic;
 }
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .dashboard {
-    padding: 10px;
+    padding: 16px;
   }
 
   .section {
-    margin-top: 10px;
+    margin-top: 16px;
+    padding: 18px;
   }
 
-  select, input, button {
+  /* safer for MUI */
+  .responsive-stack > * {
     width: 100%;
     margin-top: 8px;
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    transition: none;
+  }
+
+  .section:hover {
+    transform: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+}
