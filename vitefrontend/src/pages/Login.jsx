@@ -1,4 +1,5 @@
-import { useState } from "react";
+import api from "../api";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 
@@ -12,9 +13,21 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Load remembered email
+  useEffect(() => {
+    const saved = localStorage.getItem("rememberEmail");
+    if (saved) setEmail(saved);
+  }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) navigate("/dashboard");
+  }, [navigate]);
+
   const login = async (e) => {
     e.preventDefault();
-    if (loading) return; // prevent double click
+    if (loading) return;
 
     setError("");
 
@@ -26,17 +39,33 @@ export default function Login() {
     try {
       setLoading(true);
 
-      // 🔹 Replace with real API
-      await new Promise((res) => setTimeout(res, 800));
+      const params = new URLSearchParams();
+      params.append("username", email);
+      params.append("password", password);
 
-      // optional remember logic
-      if (remember) {
-        localStorage.setItem("rememberEmail", email);
+      const res = await api.post("/login", params, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+
+      const token = res.data?.access_token;
+
+      if (!token) {
+        throw new Error("No token received");
       }
 
-      navigate("/");
+      localStorage.setItem("token", token);
+
+      if (remember) {
+        localStorage.setItem("rememberEmail", email);
+      } else {
+        localStorage.removeItem("rememberEmail");
+      }
+
+      navigate("/dashboard");
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError(err.response?.data?.detail || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -47,35 +76,31 @@ export default function Login() {
       <form className="login-card" onSubmit={login}>
         <h2 className="login-title">Welcome Back 👋</h2>
 
-        {/* Email */}
         <input
           type="email"
           placeholder="Email address"
           className="login-input"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          onChange={(e) => setEmail(e.target.value.trim())}
         />
 
-        {/* Password */}
         <div className="password-wrapper">
           <input
             type={showPass ? "text" : "password"}
             placeholder="Password"
             className="login-input"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            onChange={(e) => setPassword(e.target.value.trim())}
           />
-          <span
+          <button
+            type="button"
             className="toggle-password"
             onClick={() => setShowPass(!showPass)}
           >
             {showPass ? "Hide" : "Show"}
-          </span>
+          </button>
         </div>
 
-        {/* Options row */}
         <div className="login-options">
           <label className="remember-me">
             <input
@@ -93,11 +118,7 @@ export default function Login() {
 
         {error && <p className="login-error">{error}</p>}
 
-        <button
-          type="submit"
-          className="login-button"
-          disabled={loading}
-        >
+        <button type="submit" className="login-button" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>

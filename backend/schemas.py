@@ -14,3 +14,6 @@ class TaskCreate(BaseModel):
     title: str
     project_id: int
 
+
+class TaskUpdate(BaseModel):
+    status: str

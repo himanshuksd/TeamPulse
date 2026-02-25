@@ -8,15 +8,17 @@ import { Helmet } from "react-helmet";
 const Showcase = lazy(() => import("../components/Showcase"));
 const Stats = lazy(() => import("../components/Stats"));
 
+// preload hint (safe optional)
+Showcase.preload?.();
+Stats.preload?.();
+
 function Home() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user && user.token) {
-      setIsLoggedIn(true);
-    }
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
   }, []);
 
   useEffect(() => {
@@ -34,6 +36,8 @@ function Home() {
   return (
     <>
       <Helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="index, follow" />
         <title>TeamPulse | Real-Time Team Performance Dashboard</title>
         <meta
           name="description"
@@ -45,9 +49,18 @@ function Home() {
       <nav className="navbar">
         <h2>TeamPulse</h2>
         <div>
-          <button onClick={handleStart} className="nav-btn primary">
-            Get Started
-          </button>
+          {isLoggedIn ? (
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="nav-btn primary"
+            >
+              Go to Dashboard
+            </button>
+          ) : (
+            <button onClick={handleStart} className="nav-btn primary">
+              Get Started
+            </button>
+          )}
         </div>
       </nav>
 
