@@ -18,8 +18,11 @@ import {
   Chip,
 } from "@mui/material";
 import { motion } from "framer-motion";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 
-export default function Dashboard() {
+export default function Dashboard({ darkMode, setDarkMode }) {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [tasks, setTasks] = useState([]);
@@ -41,6 +44,23 @@ export default function Dashboard() {
     if (selectedProject) fetchTasks(selectedProject);
   }, [selectedProject]);
 
+  // ================= DRAG =================
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const taskId = Number(result.draggableId);
+    const newStatus =
+      result.destination.droppableId === "DONE" ? "DONE" : "TODO";
+
+    try {
+      await api.put(`/tasks/${taskId}`, { status: newStatus });
+      fetchTasks(selectedProject);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ================= API =================
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -112,22 +132,35 @@ export default function Dashboard() {
   const doneTasks = tasks.filter((t) => t.status === "DONE");
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f6f8fb" }}>
-      {/* NAVBAR */}
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      {/* ✅ FIXED NAVBAR */}
       <AppBar
         position="static"
-        elevation={0}
-        sx={{
+        elevation={1}
+        sx={(theme) => ({
           backdropFilter: "blur(10px)",
-          bgcolor: "rgba(15,23,42,0.85)",
-        }}
+          bgcolor:
+            theme.palette.mode === "dark" ? "rgba(15,23,42,0.9)" : "#ffffff",
+          color: theme.palette.text.primary,
+          borderBottom: `1px solid ${
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.08)"
+              : "rgba(0,0,0,0.06)"
+          }`,
+        })}
       >
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
             TeamPulse
           </Typography>
+
           <Button color="inherit">Dashboard</Button>
           <Button color="inherit">Projects</Button>
+
+          <Button color="inherit" onClick={() => setDarkMode((p) => !p)}>
+            {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </Button>
+
           <Button color="inherit" onClick={handleLogout}>
             Logout
           </Button>
@@ -164,6 +197,7 @@ export default function Dashboard() {
                   fullWidth
                 />
               </Grid>
+
               <Grid item xs={12} md={2}>
                 <Button
                   variant="contained"
@@ -174,6 +208,7 @@ export default function Dashboard() {
                   Add
                 </Button>
               </Grid>
+
               <Grid item xs={12} md={4}>
                 <Select
                   fullWidth
@@ -194,52 +229,67 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Tasks Section */}
+        {/* Add Task */}
         {selectedProject && (
-          <>
-            {/* Add Task */}
-            <Card sx={{ mb: 4, borderRadius: 3 }}>
-              <CardContent>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={9}>
-                    <TextField
-                      label="New Task"
-                      value={newTask}
-                      onChange={(e) => setNewTask(e.target.value)}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{ height: "56px", borderRadius: 2 }}
-                      onClick={createTask}
-                    >
-                      Add Task
-                    </Button>
-                  </Grid>
+          <Card sx={{ mb: 4, borderRadius: 3 }}>
+            <CardContent>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={9}>
+                  <TextField
+                    label="New Task"
+                    value={newTask}
+                    onChange={(e) => setNewTask(e.target.value)}
+                    fullWidth
+                  />
                 </Grid>
-              </CardContent>
-            </Card>
 
-            {/* Kanban */}
+                <Grid item xs={12} md={3}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{ height: "56px", borderRadius: 2 }}
+                    onClick={createTask}
+                  >
+                    Add Task
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ===== KANBAN ===== */}
+        {selectedProject && (
+          <DragDropContext onDragEnd={onDragEnd}>
             <Grid container spacing={3}>
               {/* TODO */}
               <Grid item xs={12} md={6}>
                 <KanbanColumn
                   title="TODO"
                   count={todoTasks.length}
-                  color="#fff7ed"
+                  droppableId="TODO"
                 >
-                  {todoTasks.map((task) => (
-                    <TaskCard
+                  {todoTasks.map((task, index) => (
+                    <Draggable
                       key={task.id}
-                      task={task}
-                      onDone={updateStatus}
-                      onDelete={deleteTask}
-                      showDone
-                    />
+                      draggableId={String(task.id)}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <TaskCard
+                            task={task}
+                            onDone={updateStatus}
+                            onDelete={deleteTask}
+                            showDone
+                          />
+                        </div>
+                      )}
+                    </Draggable>
                   ))}
                 </KanbanColumn>
               </Grid>
@@ -249,42 +299,79 @@ export default function Dashboard() {
                 <KanbanColumn
                   title="DONE"
                   count={doneTasks.length}
-                  color="#ecfdf5"
+                  droppableId="DONE"
                 >
-                  {doneTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} onDelete={deleteTask} />
+                  {doneTasks.map((task, index) => (
+                    <Draggable
+                      key={task.id}
+                      draggableId={String(task.id)}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <TaskCard task={task} onDelete={deleteTask} />
+                        </div>
+                      )}
+                    </Draggable>
                   ))}
                 </KanbanColumn>
               </Grid>
             </Grid>
-          </>
+          </DragDropContext>
         )}
       </Container>
     </Box>
   );
 }
 
-function KanbanColumn({ title, count, color, children }) {
+// ================= COLUMN =================
+function KanbanColumn({ title, count, children, droppableId }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <Box
-        sx={{
-          p: 2.5,
-          borderRadius: 3,
-          bgcolor: color,
-          minHeight: 300,
-        }}
-      >
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography fontWeight={700}>{title}</Typography>
-          <Chip label={count} size="small" />
-        </Box>
-        {children}
-      </Box>
-    </motion.div>
+    <Droppable droppableId={droppableId}>
+      {(provided) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Box
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            sx={(theme) => ({
+              p: 2.5,
+              borderRadius: 3,
+              minHeight: 300,
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(30,41,59,0.6)"
+                  : "#f8fafc",
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(0,0,0,0.06)"
+              }`,
+            })}
+          >
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
+            >
+              <Typography fontWeight={700}>{title}</Typography>
+              <Chip label={count} size="small" />
+            </Box>
+
+            {children}
+            {provided.placeholder}
+          </Box>
+        </motion.div>
+      )}
+    </Droppable>
   );
 }
 
+// ================= CARD =================
 function TaskCard({ task, onDone, onDelete, showDone }) {
   return (
     <motion.div whileHover={{ scale: 1.02 }}>
@@ -297,6 +384,7 @@ function TaskCard({ task, onDone, onDelete, showDone }) {
           }}
         >
           <Typography>{task.title}</Typography>
+
           <Box sx={{ display: "flex", gap: 1 }}>
             {showDone && (
               <Button
@@ -308,6 +396,7 @@ function TaskCard({ task, onDone, onDelete, showDone }) {
                 Done
               </Button>
             )}
+
             <Button
               size="small"
               variant="outlined"

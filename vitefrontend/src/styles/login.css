@@ -1,19 +1,41 @@
+/* ===== THEME VARIABLES ===== */
+:root {
+  --login-bg: linear-gradient(135deg, #eef2ff, #e2e8f0);
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --input-bg: #fafafa;
+  --input-border: #cbd5e1;
+  --input-focus: #3b82f6;
+  --muted-text: #475569;
+}
+
+/* ===== DARK MODE ===== */
+[data-mui-color-scheme="dark"] {
+  --login-bg: linear-gradient(135deg, #020617, #0f172a);
+  --card-bg: #0f172a;
+  --text-main: #e5e7eb;
+  --input-bg: #020617;
+  --input-border: #334155;
+  --muted-text: #94a3b8;
+}
+
 /* ===== Page Background ===== */
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eef2ff, #e2e8f0);
+  background: var(--login-bg);
   font-family: "Poppins", sans-serif;
   padding: 20px;
+  transition: background 0.25s ease;
 }
 
 /* ===== Card ===== */
 .login-card {
   width: 100%;
   max-width: 380px;
-  background: #ffffff;
+  background: var(--card-bg);
   padding: 36px 32px;
   border-radius: 16px;
   box-shadow:
@@ -21,12 +43,15 @@
     0 4px 10px rgba(15, 23, 42, 0.04);
   text-align: center;
   animation: fadeInUp 0.45s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
 /* ===== Title ===== */
 .login-title {
   margin-bottom: 26px;
-  color: #0f172a;
+  color: var(--text-main);
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -36,11 +61,12 @@
   width: 100%;
   padding: 13px 14px;
   margin-bottom: 18px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 14px;
   transition: all 0.22s ease;
-  background: #fafafa;
+  background: var(--input-bg);
+  color: var(--text-main);
 }
 
 .login-input::placeholder {
@@ -49,8 +75,8 @@
 
 .login-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: #ffffff;
+  border-color: var(--input-focus);
+  background: var(--card-bg);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
@@ -68,7 +94,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #475569;
+  color: var(--muted-text);
   cursor: pointer;
 }
 

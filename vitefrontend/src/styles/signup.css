@@ -45,7 +45,7 @@
 }
 
 .signup-input:last-of-type {
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 /* ===== BUTTON ===== */
@@ -60,7 +60,9 @@
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .signup-button:hover {
@@ -100,3 +102,31 @@
   text-decoration: none;
 }
 
+/* ===== PASSWORD STRENGTH ===== */
+.password-strength {
+  text-align: left;
+  margin: 4px 0 14px;
+}
+
+.strength-bar {
+  height: 6px;
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition:
+    width 0.3s ease,
+    background 0.25s ease;
+}
+
+.strength-text {
+  font-size: 12px;
+  font-weight: 600;
+}

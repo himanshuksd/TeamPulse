@@ -5,32 +5,31 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import { Helmet } from "react-helmet";
 
+// ✅ lazy imports
 const Showcase = lazy(() => import("../components/Showcase"));
 const Stats = lazy(() => import("../components/Stats"));
-
-// preload hint (safe optional)
-Showcase.preload?.();
-Stats.preload?.();
 
 function Home() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // ✅ check auth once on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(Boolean(token));
   }, []);
 
+  // ✅ AOS init (safe)
   useEffect(() => {
-    AOS.init({ duration: 1000, once: true });
+    AOS.init({
+      duration: 900,
+      once: true,
+      easing: "ease-out-cubic",
+    });
   }, []);
 
   const handleStart = () => {
-    if (isLoggedIn) {
-      navigate("/dashboard");
-    } else {
-      navigate("/login");
-    }
+    navigate(isLoggedIn ? "/dashboard" : "/login");
   };
 
   return (
@@ -45,35 +44,43 @@ function Home() {
         />
       </Helmet>
 
-      {/* Navbar */}
+      {/* ================= NAVBAR ================= */}
       <nav className="navbar">
         <h2>TeamPulse</h2>
+
         <div>
           {isLoggedIn ? (
             <button
               onClick={() => navigate("/dashboard")}
               className="nav-btn primary"
+              aria-label="Go to dashboard"
             >
               Go to Dashboard
             </button>
           ) : (
-            <button onClick={handleStart} className="nav-btn primary">
+            <button
+              onClick={handleStart}
+              className="nav-btn primary"
+              aria-label="Get started"
+            >
               Get Started
             </button>
           )}
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* ================= HERO ================= */}
       <section className="hero">
         <div className="container hero-content">
           <div className="hero-left" data-aos="fade-right">
             <h1>Lead With Confidence.</h1>
+
             <p>
               TeamPulse gives you real-time visibility into your team’s
               progress, workload, and momentum — so you can make smarter
               decisions with clarity.
             </p>
+
             <button onClick={handleStart} className="primary-btn">
               Get Started Free
             </button>
@@ -84,14 +91,17 @@ function Home() {
               src="/images/dashboard.png"
               alt="TeamPulse dashboard showing project analytics and charts"
               className="hero-image"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
       </section>
 
-      {/* Problem */}
+      {/* ================= PROBLEM ================= */}
       <section className="container about" data-aos="fade-up">
         <h2 className="section-title">Why Teams Lose Clarity</h2>
+
         <p className="about-text">
           Scattered updates, unclear ownership, and hidden delays make it
           difficult for leaders to understand the true progress of their teams.
@@ -99,11 +109,12 @@ function Home() {
         </p>
       </section>
 
-      {/* Solution */}
+      {/* ================= SOLUTION ================= */}
       <section className="container">
         <h2 className="section-title" data-aos="fade-up">
           How TeamPulse Helps
         </h2>
+
         <div className="features-grid">
           <div className="feature-card" data-aos="fade-up">
             <h3>Real-Time Visibility</h3>
@@ -122,26 +133,28 @@ function Home() {
         </div>
       </section>
 
+      {/* ================= LAZY SECTIONS ================= */}
       <Suspense
         fallback={
-          <div style={{ textAlign: "center", padding: "40px" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: "40px" }}>Loading…</div>
         }
       >
         <Stats />
         <Showcase />
       </Suspense>
 
-      {/* CTA */}
+      {/* ================= CTA ================= */}
       <section className="cta" data-aos="zoom-in">
         <h2>Start Leading With Confidence Today</h2>
+
         <button onClick={handleStart} className="primary-btn">
           Try TeamPulse
         </button>
       </section>
 
-      {/* Footer */}
+      {/* ================= FOOTER ================= */}
       <footer className="footer">
-        <p>© 2026 TeamPulse. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} TeamPulse. All rights reserved.</p>
       </footer>
     </>
   );

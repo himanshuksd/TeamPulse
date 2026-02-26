@@ -1,0 +1,32 @@
+/* ===== APP ROOT ===== */
+.app-root {
+  min-height: 100vh;
+}
+
+/* ===== Smooth theme transition ===== */
+body {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ===== Scrollbar (premium look) ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* ===== Selection color ===== */
+::selection {
+  background: rgba(59, 130, 246, 0.25);
+}

@@ -1,23 +1,22 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 from database import cursor, db
-from schemas import UserCreate, ProjectCreate, TaskCreate
+from schemas import TaskUpdate, UserCreate, ProjectCreate, TaskCreate
 
 # =============================
-# 🔐 JWT CONFIG
+# 🔐 SECURITY CONFIG
 # =============================
 
 SECRET_KEY = "your-super-secret-key-change-this"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 # =============================
@@ -38,18 +37,13 @@ app.add_middleware(
 )
 
 # =============================
-# 🔐 AUTH HELPERS
+# 🔐 HELPERS
 # =============================
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict):
     to_encode = data.copy()
-
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -61,13 +55,8 @@ def authenticate_user(email: str, password: str):
     if not user:
         return None
 
-    hashed_password = user.get("password")
-
-    if not hashed_password:
-        return None
-
     try:
-        if not pwd_context.verify(password, hashed_password):
+        if not pwd_context.verify(password, user["password"]):
             return None
     except Exception:
         return None
@@ -77,7 +66,7 @@ def authenticate_user(email: str, password: str):
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
-        status_code=401,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
@@ -85,10 +74,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
-
         if user_id is None:
             raise credentials_exception
-
     except JWTError:
         raise credentials_exception
 
@@ -118,30 +105,21 @@ def root():
 
 @app.post("/register")
 def register(user: UserCreate):
-    try:
-        cursor.execute("SELECT id FROM users WHERE email = %s", (user.email,))
-        existing = cursor.fetchone()
+    cursor.execute("SELECT id FROM users WHERE email = %s", (user.email,))
+    existing = cursor.fetchone()
 
-        if existing:
-            raise HTTPException(status_code=400, detail="Email already registered")
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-        print("PASSWORD LENGTH:", len(user.password))
-        print("PASSWORD VALUE:", repr(user.password))
-        hashed_password = pwd_context.hash(user.password[:72])
+    hashed_password = pwd_context.hash(user.password)
 
+    cursor.execute(
+        "INSERT INTO users (name,email,password) VALUES (%s,%s,%s)",
+        (user.name, user.email, hashed_password),
+    )
+    db.commit()
 
-        cursor.execute(
-            "INSERT INTO users (name,email,password) VALUES (%s,%s,%s)",
-            (user.name, user.email, hashed_password),
-        )
-        db.commit()
-
-        return {"message": "User registered"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    return {"message": "User registered"}
 
 
 @app.post("/login")
@@ -151,7 +129,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    access_token = create_access_token(data={"sub": str(user["id"])})
+    access_token = create_access_token(
+        data={
+            "sub": str(user["id"]),
+            "email": user["email"],
+        }
+    )
 
     return {
         "access_token": access_token,
@@ -161,7 +144,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 # =============================
-# 📁 PROJECT ROUTES (PROTECTED)
+# 📁 PROJECT ROUTES (MULTI-TENANT)
 # =============================
 
 
@@ -170,26 +153,26 @@ def create_project(
     project: ProjectCreate,
     current_user: dict = Depends(get_current_user),
 ):
-    try:
-        cursor.execute(
-            "INSERT INTO projects (name) VALUES (%s)",
-            (project.name,),
-        )
-        db.commit()
-        return {"message": "Project created"}
+    cursor.execute(
+        "INSERT INTO projects (name, user_id) VALUES (%s, %s)",
+        (project.name, current_user["id"]),
+    )
+    db.commit()
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    return {"message": "Project created"}
 
 
 @app.get("/projects")
 def get_projects(current_user: dict = Depends(get_current_user)):
-    cursor.execute("SELECT * FROM projects ORDER BY id DESC")
+    cursor.execute(
+        "SELECT * FROM projects WHERE user_id = %s ORDER BY id DESC",
+        (current_user["id"],),
+    )
     return cursor.fetchall()
 
 
 # =============================
-# ✅ TASK ROUTES (PROTECTED)
+# ✅ TASK ROUTES (MULTI-TENANT)
 # =============================
 
 
@@ -198,9 +181,19 @@ def get_tasks(
     project_id: int,
     current_user: dict = Depends(get_current_user),
 ):
+    # ✅ ownership check
     cursor.execute(
-        "SELECT * FROM tasks WHERE project_id = %s ORDER BY id DESC",
-        (project_id,),
+        "SELECT id FROM projects WHERE id=%s AND user_id=%s",
+        (project_id, current_user["id"]),
+    )
+    project = cursor.fetchone()
+
+    if not project:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    cursor.execute(
+        "SELECT * FROM tasks WHERE project_id=%s AND user_id=%s ORDER BY id DESC",
+        (project_id, current_user["id"]),
     )
     return cursor.fetchall()
 
@@ -210,33 +203,41 @@ def create_task(
     task: TaskCreate,
     current_user: dict = Depends(get_current_user),
 ):
-    try:
-        cursor.execute(
-            "INSERT INTO tasks (title, status, project_id) VALUES (%s,'TODO',%s)",
-            (task.title, task.project_id),
-        )
-        db.commit()
-        return {"message": "Task created"}
+    # ✅ verify project ownership
+    cursor.execute(
+        "SELECT id FROM projects WHERE id=%s AND user_id=%s",
+        (task.project_id, current_user["id"]),
+    )
+    project = cursor.fetchone()
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    if not project:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    cursor.execute(
+        "INSERT INTO tasks (title, status, project_id, user_id) VALUES (%s,'TODO',%s,%s)",
+        (task.title, task.project_id, current_user["id"]),
+    )
+    db.commit()
+
+    return {"message": "Task created"}
 
 
 @app.put("/tasks/{task_id}")
 def update_task_status(
     task_id: int,
+    task: TaskUpdate,
     current_user: dict = Depends(get_current_user),
 ):
-    try:
-        cursor.execute(
-            "UPDATE tasks SET status = 'DONE' WHERE id = %s",
-            (task_id,),
-        )
-        db.commit()
-        return {"message": "Task marked as DONE"}
+    cursor.execute(
+        "UPDATE tasks SET status=%s WHERE id=%s AND user_id=%s",
+        (task.status, task_id, current_user["id"]),
+    )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.commit()
+    return {"message": "Task updated"}
 
 
 @app.delete("/tasks/{task_id}")
@@ -244,10 +245,13 @@ def delete_task(
     task_id: int,
     current_user: dict = Depends(get_current_user),
 ):
-    try:
-        cursor.execute("DELETE FROM tasks WHERE id = %s", (task_id,))
-        db.commit()
-        return {"message": "Task deleted"}
+    cursor.execute(
+        "DELETE FROM tasks WHERE id=%s AND user_id=%s",
+        (task_id, current_user["id"]),
+    )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.commit()
+    return {"message": "Task deleted"}

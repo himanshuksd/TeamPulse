@@ -12,13 +12,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load remembered email
+  // ✅ Load remembered email once
   useEffect(() => {
     const saved = localStorage.getItem("rememberEmail");
     if (saved) setEmail(saved);
   }, []);
 
-  // Redirect if already logged in
+  // ✅ Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) navigate("/dashboard");
@@ -30,7 +30,9 @@ export default function Login() {
 
     setError("");
 
-    if (!email || !password) {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
       setError("Please enter email and password");
       return;
     }
@@ -39,7 +41,7 @@ export default function Login() {
       setLoading(true);
 
       const params = new URLSearchParams();
-      params.append("username", email.trim());
+      params.append("username", cleanEmail);
       params.append("password", password);
 
       const res = await api.post("/login", params, {
@@ -48,16 +50,18 @@ export default function Login() {
         },
       });
 
-      const token = res.data?.access_token;
+      const token = res?.data?.access_token;
 
       if (!token) {
-        throw new Error("No token received");
+        throw new Error("Authentication failed");
       }
 
+      // ✅ Save token
       localStorage.setItem("token", token);
 
+      // ✅ Remember email logic
       if (remember) {
-        localStorage.setItem("rememberEmail", email.trim());
+        localStorage.setItem("rememberEmail", cleanEmail);
       } else {
         localStorage.removeItem("rememberEmail");
       }
@@ -76,9 +80,10 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <form className="login-card" onSubmit={login}>
+      <form className="login-card" onSubmit={login} noValidate>
         <h2 className="login-title">Welcome Back 👋</h2>
 
+        {/* Email */}
         <input
           type="email"
           placeholder="Email address"
@@ -86,8 +91,10 @@ export default function Login() {
           className="login-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
+        {/* Password */}
         <input
           type="password"
           placeholder="Password"
@@ -95,8 +102,10 @@ export default function Login() {
           className="login-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
 
+        {/* Options */}
         <div className="login-options">
           <label className="remember-me">
             <input
@@ -112,8 +121,10 @@ export default function Login() {
           </Link>
         </div>
 
+        {/* Error */}
         {error && <p className="login-error">{error}</p>}
 
+        {/* Button */}
         <button type="submit" className="login-button" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
