@@ -8,7 +8,6 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,7 +39,7 @@ export default function Login() {
       setLoading(true);
 
       const params = new URLSearchParams();
-      params.append("username", email);
+      params.append("username", email.trim());
       params.append("password", password);
 
       const res = await api.post("/login", params, {
@@ -58,14 +57,18 @@ export default function Login() {
       localStorage.setItem("token", token);
 
       if (remember) {
-        localStorage.setItem("rememberEmail", email);
+        localStorage.setItem("rememberEmail", email.trim());
       } else {
         localStorage.removeItem("rememberEmail");
       }
 
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed. Please try again.");
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          "Login failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -79,27 +82,20 @@ export default function Login() {
         <input
           type="email"
           placeholder="Email address"
+          autoComplete="email"
           className="login-input"
           value={email}
-          onChange={(e) => setEmail(e.target.value.trim())}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
-        <div className="password-wrapper">
-          <input
-            type={showPass ? "text" : "password"}
-            placeholder="Password"
-            className="login-input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value.trim())}
-          />
-          <button
-            type="button"
-            className="toggle-password"
-            onClick={() => setShowPass(!showPass)}
-          >
-            {showPass ? "Hide" : "Show"}
-          </button>
-        </div>
+        <input
+          type="password"
+          placeholder="Password"
+          autoComplete="current-password"
+          className="login-input"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
         <div className="login-options">
           <label className="remember-me">
@@ -121,6 +117,10 @@ export default function Login() {
         <button type="submit" className="login-button" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        <p style={{ marginTop: 12, textAlign: "center" }}>
+          Don’t have an account? <Link to="/signup">Sign up</Link>
+        </p>
       </form>
     </div>
   );
