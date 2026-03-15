@@ -94,3 +94,13 @@ class Message(Base):
 
     team = relationship("Team", back_populates="messages")
     user = relationship("User", back_populates="messages")
+
+class InviteToken(Base):
+    __tablename__ = "invite_tokens"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    token      = Column(String(100), unique=True)
+    team_id    = Column(Integer, ForeignKey("teams.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    team = relationship("Team")
