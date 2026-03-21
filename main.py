@@ -838,3 +838,4 @@ def get_team_messages(
         }
         for m in reversed(messages)
     ]
+
