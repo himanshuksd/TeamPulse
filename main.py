@@ -94,6 +94,12 @@ def require_team_role(team_id: int, user_id: int, allowed_roles: list, db: Sessi
 # ==========================================
 
 app = FastAPI()
+
+@app.middleware("http")
+async def add_coop_header(request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Opener-Policy"] = "unsafe-none"
+    return response
 invite_tokens: dict = {}
 
 app.add_middleware(
