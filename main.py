@@ -839,3 +839,27 @@ def get_team_messages(
         for m in reversed(messages)
     ]
 
+
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+@app.post("/auth/google")
+def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        import requests as http_requests
+        userinfo = http_requests.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {payload.token}"}
+        ).json()
+        email = userinfo["email"]
+        name = userinfo.get("name", email.split("@")[0])
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(name=name, email=email, password=hash_password(secrets.token_hex(16)))
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        token = create_access_token({"sub": str(user.id)})
+        return {"access_token": token, "token_type": "bearer", "user_id": user.id, "name": user.name, "email": user.email}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
