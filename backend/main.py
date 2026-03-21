@@ -102,7 +102,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
 <<<<<<< Updated upstream
-        "https://vitefrontend.vercel.app",  # ✅ add your actual frontend URL
+        "https://teampulsevercel-g8mitr67k-kasaudhanshivanis-projects.vercel.app",  # ✅ add your actual frontend URL
 =======
         "https://teampulsevercel-g8mitr67k-kasaudhanshivanis-projects.vercel.app",
 >>>>>>> Stashed changes
