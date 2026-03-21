@@ -101,13 +101,16 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+<<<<<<< Updated upstream
         "https://vitefrontend.vercel.app",  # ✅ add your actual frontend URL
+=======
+        "https://teampulsevercel-g8mitr67k-kasaudhanshivanis-projects.vercel.app",
+>>>>>>> Stashed changes
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.on_event("startup")
 def startup():
     print("Creating tables...")
@@ -157,6 +160,36 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         "name": user.name,
         "email": user.email
     }
+
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+@app.post("/auth/google")
+def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        import requests as http_requests
+        userinfo = http_requests.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {payload.token}"}
+        ).json()
+        email = userinfo["email"]
+        name = userinfo.get("name", email.split("@")[0])
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(name=name, email=email, password=hash_password(secrets.token_hex(16)))
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        token = create_access_token({"sub": str(user.id)})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user_id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
 
 # ==========================================
 # NOTIFICATIONS
