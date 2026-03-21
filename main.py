@@ -869,3 +869,4 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
         return {"access_token": token, "token_type": "bearer", "user_id": user.id, "name": user.name, "email": user.email}
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid Google token")
+
