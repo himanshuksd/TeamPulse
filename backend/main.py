@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from websocket_manager import manager
 from database import SessionLocal, engine
-from models import Base, User, Project, Task, Team, TeamMember, Message
+from models import Base, User, Project, Task, Team, TeamMember, Message, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken
 from schemas import UserCreate, ProjectCreate, TaskCreate, TeamCreate, AddMemberRequest
 from services.analytics_engine import calculate_tpi
 from services.ml_engine import (
@@ -94,19 +94,43 @@ def require_team_role(team_id: int, user_id: int, allowed_roles: list, db: Sessi
 # ==========================================
 
 app = FastAPI()
-invite_tokens: dict = {}
+@app.post("/teams/{team_id}/invite")
+def generate_invite(
+    team_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    require_team_role(team_id, current_user.id, ["admin"], db)
+    token = secrets.token_urlsafe(16)
+    invite = InviteToken(token=token, team_id=team_id)
+    db.add(invite)
+    db.commit()
+    return {"invite_token": token}
+
+@app.post("/teams/join/{token}")
+def join_via_invite(
+    token: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    invite = db.query(InviteToken).filter(InviteToken.token == token).first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invalid or expired invite link")
+    existing = db.query(TeamMember).filter(
+        TeamMember.team_id == invite.team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already a member of this team")
+    new_member = TeamMember(team_id=invite.team_id, user_id=current_user.id, role="member")
+    db.add(new_member)
+    db.commit()
+    team = db.query(Team).filter(Team.id == invite.team_id).first()
+    return {"message": "Joined successfully", "team_id": invite.team_id, "team_name": team.name if team else ""}
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-<<<<<<< Updated upstream
-        "https://teampulsevercel-g8mitr67k-kasaudhanshivanis-projects.vercel.app",  # ✅ add your actual frontend URL
-=======
-        "https://teampulsevercel-g8mitr67k-kasaudhanshivanis-projects.vercel.app",
->>>>>>> Stashed changes
-    ],
+   allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -163,7 +187,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 class GoogleLoginRequest(BaseModel):
     token: str
-
 @app.post("/auth/google")
 def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     try:
@@ -179,6 +202,34 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
         ...
     except HTTPException:
         raise
+<<<<<<< Updated upstream
+=======
+    except Exception as e:
+        print("GOOGLE ERROR:", str(e))  # ADD THIS
+        raise HTTPException(status_code=400, detail=str(e))  # Show real error
+    try:
+        import requests as http_requests
+        userinfo = http_requests.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {payload.token}"}
+        ).json()
+        email = userinfo["email"]
+        name = userinfo.get("name", email.split("@")[0])
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(name=name, email=email, password=hash_password(secrets.token_hex(16)))
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        token = create_access_token({"sub": str(user.id)})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user_id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+>>>>>>> Stashed changes
     except Exception as e:
         print("GOOGLE ERROR:", str(e))  # ADD THIS
         raise HTTPException(status_code=400, detail=str(e))  # Show real error
