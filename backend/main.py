@@ -10,7 +10,14 @@ from argon2.exceptions import VerifyMismatchError
 from sqlalchemy import desc
 from typing import Optional
 from pydantic import BaseModel
+import os
+import requests
 
+from dotenv import load_dotenv
+load_dotenv()
+
+import secrets
+from fastapi import FastAPI, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
 from websocket_manager import manager
 from database import SessionLocal, engine
 from models import Base, User, Project, Task, Team, TeamMember, Message, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken, InviteToken
@@ -186,57 +193,92 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     }
 
 class GoogleLoginRequest(BaseModel):
-    token: str
+    code: str
 @app.post("/auth/google")
 def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     try:
-        import requests as http_requests
-        userinfo = http_requests.get(
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+        google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+        google_redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+
+        print("REDIRECT_URI =", os.getenv("GOOGLE_REDIRECT_URI"))
+
+
+    
+        if not google_client_id or not google_client_secret or not google_redirect_uri:
+            raise HTTPException(
+                status_code=500,
+                detail="Google OAuth environment variables are missing"
+            )
+
+        token_res = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": payload.code,
+                "client_id": google_client_id,
+                "client_secret": google_client_secret,
+                "redirect_uri": google_redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=15,
+        )
+
+        token_json = token_res.json()
+        print("GOOGLE TOKEN RESPONSE:", token_json)
+
+        access_token = token_json.get("access_token")
+        if not access_token:
+            raise HTTPException(
+                status_code=400,
+                detail=token_json.get("error_description")
+                or token_json.get("error")
+                or "Failed to get Google access token"
+            )
+
+        userinfo_res = requests.get(
             "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {payload.token}"}
-        ).json()
-        print("GOOGLE USERINFO:", userinfo)  # ADD THIS
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=15,
+        )
+
+        userinfo = userinfo_res.json()
+        print("GOOGLE USERINFO:", userinfo)
+
         email = userinfo.get("email")
         if not email:
-            raise HTTPException(status_code=400, detail=f"No email in token: {userinfo}")
-        ...
-    except HTTPException:
-        raise
-<<<<<<< Updated upstream
-=======
-    except Exception as e:
-        print("GOOGLE ERROR:", str(e))  # ADD THIS
-        raise HTTPException(status_code=400, detail=str(e))  # Show real error
-    try:
-        import requests as http_requests
-        userinfo = http_requests.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {payload.token}"}
-        ).json()
-        email = userinfo["email"]
-        name = userinfo.get("name", email.split("@")[0])
+            raise HTTPException(
+                status_code=400,
+                detail=f"No email found in Google response: {userinfo}"
+            )
+
+        name = userinfo.get("name") or email.split("@")[0]
+
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(name=name, email=email, password=hash_password(secrets.token_hex(16)))
+            user = User(
+                name=name,
+                email=email,
+                password=hash_password(secrets.token_hex(16)),
+            )
             db.add(user)
             db.commit()
             db.refresh(user)
-        token = create_access_token({"sub": str(user.id)})
+
+        app_token = create_access_token({"sub": str(user.id)})
+
         return {
-            "access_token": token,
+            "access_token": app_token,
             "token_type": "bearer",
             "user_id": user.id,
             "name": user.name,
-            "email": user.email
+            "email": user.email,
         }
->>>>>>> Stashed changes
-    except Exception as e:
-        print("GOOGLE ERROR:", str(e))  # ADD THIS
-        raise HTTPException(status_code=400, detail=str(e))  # Show real error
-# ==========================================
-# NOTIFICATIONS
-# ==========================================
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("GOOGLE ERROR:", str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 @app.get("/notifications")
 def get_notifications(
     current_user: User = Depends(get_current_user),
@@ -917,3 +959,5 @@ def get_team_messages(
         }
         for m in reversed(messages)
     ]
+
+
