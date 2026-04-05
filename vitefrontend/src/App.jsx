@@ -12,7 +12,7 @@ import ChatPage from "./pages/ChatPage";
 import Settings from "./pages/Settings";
 import Gamification from "./pages/Gamification";
 import ProjectDetail from './pages/ProjectDetail';
-import JoinTeam from './pages/JoinTeam';
+import JoinTeam from "./pages/JoinTeam.jsx";
 import { applyTheme, getSavedTheme } from "./hooks/useTheme";
 function App() {
   applyTheme(getSavedTheme());
