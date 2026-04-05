@@ -28,3 +28,4 @@ dist/
 .env.local
 .vercel
 .env*.local
+_pycache__
