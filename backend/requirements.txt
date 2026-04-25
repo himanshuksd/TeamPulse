@@ -12,3 +12,4 @@ websockets
 pydantic
 pydantic[email]
 cryptography
+argon2-cffi
