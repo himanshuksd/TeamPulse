@@ -13,3 +13,6 @@ scikit-learn
 pandas
 numpy
 cryptography
+scikit-learn
+pandas
+numpy
