@@ -4,6 +4,7 @@ sqlalchemy
 psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
+argon2-cffi
 python-multipart
 httpx
 python-dotenv
@@ -12,4 +13,6 @@ websockets
 pydantic
 pydantic[email]
 cryptography
-argon2-cffi
+scikit-learn
+pandas
+numpy
