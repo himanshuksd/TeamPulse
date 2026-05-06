@@ -996,8 +996,10 @@ from services.ml_engine import (
 # ==========================================
 # CONFIG
 # ==========================================
-
-SECRET_KEY = "supersecretkey_change_this_in_production"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "supersecretkey_change_this_in_production"
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -1069,7 +1071,11 @@ app = FastAPI()
 @app.middleware("http")
 async def add_coop_header(request, call_next):
     response = await call_next(request)
+
     response.headers["Cross-Origin-Opener-Policy"] = "unsafe-none"
+    response.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+
     return response
 
 app.add_middleware(
@@ -1898,7 +1904,7 @@ def get_dashboard(
 def ai_summary(payload: dict, current_user: User = Depends(get_current_user)):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-      raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured")    
+       raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured")
     try:
         res = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
