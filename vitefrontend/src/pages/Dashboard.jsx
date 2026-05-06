@@ -149,18 +149,17 @@ Team: ${memberSummary || 'Unknown'}
     `.trim();
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: `You are Team AI inside TeamPulse. Generate a sharp, friendly daily standup summary in 3 sections: ✅ What's going well, ⚠️ Watch out for, 💡 Today's focus. Use **bold** for key names/numbers. Under 120 words. Be specific with real data — never generic.`,
-          messages: [{ role: 'user', content: `Generate today's team summary:\n\n${context}` }],
-        }),
+      const res = await api.post('/ai/summary', {
+        system: `You are Team AI inside TeamPulse. Generate a sharp, friendly daily standup summary in 3 sections: ✅ What's going well, ⚠️ Watch out for, 💡 Today's focus. Use **bold** for key names/numbers. Under 120 words. Be specific with real data.`,
+        prompt: `Generate today's team summary:\n\n${context}`,
       });
-      const data = await res.json();
-      const text = data.content?.[0]?.text || 'Unable to generate summary right now.';
+
+      // api (axios) already parses JSON — use res.data directly
+      const text = res.data?.content?.[0]?.text
+        || res.data?.summary
+        || res.data?.text
+        || 'Unable to generate summary right now.';
+
       const words = text.split(' ');
       let current = '';
       for (let i = 0; i < words.length; i++) {
@@ -174,8 +173,7 @@ Team: ${memberSummary || 'Unknown'}
       setAiSummaryDone(true);
     }
     setAiSummaryLoading(false);
-  };
-
+  }; // ← closes generateAISummary
   // ── Derived values ─────────────────────────────────────────────────────────
   const inProgressTasks = dashData
     ? Math.max(dashData.total_tasks - dashData.completed_tasks - dashData.overdue_tasks, 0)

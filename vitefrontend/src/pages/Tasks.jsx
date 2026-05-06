@@ -3,9 +3,8 @@ import api from "../services/api";
 import { useTeam } from "../context/TeamContext";
 import {
   CheckSquare, Plus, RefreshCw, AlertTriangle,
-  Search, Clock, CheckCircle2, Circle, X, Filter
+  Search, Clock, CheckCircle2, Circle, X, Filter, Trash2
 } from "lucide-react";
-
 const STATUS_STYLE = {
   DONE: { text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", dot: "bg-emerald-500", label: "Done" },
   IN_PROGRESS: { text: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200", dot: "bg-blue-500", label: "In Progress" },
@@ -85,7 +84,7 @@ export default function Tasks() {
       await api.post("/tasks", {
         title,
         project_id: parseInt(selectedProject),
-        assigned_user_id: currentUser.id || 1,
+        assigned_user_id: parseInt(currentUser.id) || parseInt(currentUser.id),
         complexity_score: 1,
         deadline: null,
       });
@@ -113,6 +112,21 @@ export default function Tasks() {
     } finally {
       setCompleting(null);
     }
+  };
+
+  const handleDelete = async (taskId) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      await api.delete(`/tasks/${taskId}`);
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    try {
+      await api.put(`/tasks/${taskId}`, { status: newStatus });
+    } catch (err) { console.error(err); fetchAll(); }
   };
 
   const filtered = tasks
@@ -290,8 +304,10 @@ export default function Tasks() {
                           {new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </span>
                       )}
-                      {task.complexity_score && (
-                        <span className="text-xs text-gray-400">Complexity: {task.complexity_score}</span>
+                      {task.assigned_user && (
+                        <span className="text-xs text-gray-400">
+                          👤 {task.assigned_user.name}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -302,14 +318,22 @@ export default function Tasks() {
                   </span>
 
                   {/* Mark done — appears on hover */}
-                  {!done && (
-                    <button
-                      onClick={() => handleComplete(task.id)}
-                      className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-all flex-shrink-0"
-                    >
-                      <CheckCircle2 size={12} /> Mark Done
-                    </button>
-                  )}
+                  <select
+                    value={task.status}
+                    onChange={e => handleStatusChange(task.id, e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 outline-none focus:border-blue-400 flex-shrink-0"
+                  >
+                    <option value="TODO">To Do</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="DONE">Done</option>
+                  </select>
+
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all flex-shrink-0"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               );
             })}

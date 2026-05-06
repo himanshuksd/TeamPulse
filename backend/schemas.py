@@ -30,7 +30,7 @@ class TaskCreate(BaseModel):
     project_id: int
     assigned_user_id: int
     complexity_score: int
-    deadline: datetime
+    deadline: Optional[datetime] = None 
 
 
 # ==========================================

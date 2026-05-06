@@ -157,7 +157,9 @@ export default function Projects() {
               {loading ? "Creating…" : "Create"}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2 ml-1">Press Enter to create · Esc to cancel</p>
+          <p className="text-xs text-gray-400 mb-4">{activeTeam?.name || `Team #${project.team_id}`}</p>
+            
+        
         </div>
       )}
 
@@ -208,6 +210,7 @@ export default function Projects() {
             return (
               <div
                 key={project.id}
+                onClick={() => navigate(`/projects/${project.id}`)}
                 className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
               >
                 {/* Card top */}
@@ -226,9 +229,8 @@ export default function Projects() {
                   {project.name}
                 </h3>
                 <p className="text-xs text-gray-400 mb-4">
-                  Team #{project.team_id}
+                  {activeTeam?.name || `Team #${project.team_id}`}
                 </p>
-
                 {/* Progress bar (mock or real) */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-1.5">
