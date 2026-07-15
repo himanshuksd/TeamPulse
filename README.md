@@ -30,9 +30,11 @@ TeamPulse helps teams manage projects and tasks while surfacing performance insi
 ## Live Demo
 
 - **Frontend:** https://vitefrontend.vercel.app/
-- **Backend API:** [your Render backend URL]
+- **Backend API:** https://himanshuksd-teampulse.onrender.com
 
 ## Project Structure
+
+\`\`\`
 TeamPulse/
 ├── backend/              # FastAPI app entry, routes
 ├── vitefrontend/          # React + Vite frontend
@@ -41,6 +43,8 @@ TeamPulse/
 ├── schemas.py               # Pydantic request/response schemas
 ├── database.py               # DB connection setup
 ├── websocket_manager.py       # WebSocket connection manager
+\`\`\`
+
 ## Getting Started
 
 ### Backend
@@ -63,8 +67,8 @@ npm run dev
 
 ## API Highlights
 
-- `POST /register`, `POST /login`, `POST /auth/google` — auth
-- `POST /teams`, `POST /teams/{id}/invite`, `POST /teams/join/{token}` — team management
-- `POST /projects`, `POST /tasks`, `PUT /tasks/{id}/complete` — project/task workflow
-- `GET /dashboard/{team_id}` — aggregated team analytics, risk level, leaderboard
-- `WS /ws/chat/{team_id}` — real-time team chat
+- \`POST /register\`, \`POST /login\`, \`POST /auth/google\` — auth
+- \`POST /teams\`, \`POST /teams/{id}/invite\`, \`POST /teams/join/{token}\` — team management
+- \`POST /projects\`, \`POST /tasks\`, \`PUT /tasks/{id}/complete\` — project/task workflow
+- \`GET /dashboard/{team_id}\` — aggregated team analytics, risk level, leaderboard
+- \`WS /ws/chat/{team_id}\` — real-time team chat
