@@ -29,4 +29,6 @@ dist/
 .vercel
 .env*.local
 __pycache__/
-*.pycbackend/venv/
+*.pyc
+
+backend/venv/
